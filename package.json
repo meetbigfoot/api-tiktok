@@ -1,0 +1,20 @@
+{
+  "name": "messaiges-api",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "author": "Moona LLC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moonadesign/messaiges-api.git"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "scripts": {},
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.1.0",
+    "cors": "^2.8.5",
+    "node-fetch-commonjs": "^3.2.4"
+  }
+}
