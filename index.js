@@ -1,38 +1,20 @@
-const cors = require('cors')({ origin: true })
-const fetch = require('node-fetch-commonjs')
 const functions = require('@google-cloud/functions-framework')
+const cors = require('cors')({ origin: true })
+const { Configuration, OpenAIApi } = require('openai')
 
-functions.http('messaiges', (req, res) => {
-  cors(req, res, () => {
-    if (req.method !== 'POST') {
-      const error = new Error('Only POST requests are accepted.')
-      error.code = 405
-      throw error
-    }
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+const openai = new OpenAIApi(configuration)
 
-    if (!req.body.text) {
-      const error = new Error('No text found in body.')
-      error.code = 400
-      throw error
-    }
-
+functions.http('turbo', (req, res) => {
+  cors(req, res, async () => {
     try {
-      fetch('https://api.openai.com/v1/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          max_tokens: 200,
-          model: 'text-davinci-003',
-          prompt: req.body.text,
-          temperature: 1,
-        }),
+      const completion = await openai.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        messages: req.body,
       })
-        .then((response) => response.json())
-        .then((json) => res.status(200).send(json))
-        .catch((error) => res.status(500).send(error))
+      res.status(200).send(completion.data.choices[0].message.content)
     } catch (error) {
       res.status(500).send(error)
     }
