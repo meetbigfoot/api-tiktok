@@ -1,24 +1,43 @@
 const functions = require('@google-cloud/functions-framework')
-const cors = require('cors')({ origin: true })
+const cloudinary = require('cloudinary').v2
 const TikAPI = require('tikapi')
 
-const api = TikAPI(process.env.TIK_API_KEY)
+const tikapi = TikAPI(process.env.TIK_API_KEY)
 
-functions.http('tiktok', (req, res) => {
-  cors(req, res, async () => {
+functions.http('tiktok', async (req, res) => {
+  //cloud.google.com/functions/docs/samples/functions-http-cors#functions_http_cors-nodejs
+  res.set('Access-Control-Allow-Origin', '*')
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Methods', 'GET, POST')
+    res.set('Access-Control-Allow-Headers', 'Content-Type')
+    res.set('Access-Control-Max-Age', '3600')
+    res.status(204).send('')
+  } else {
     try {
-      let response = await api.public.search({
-        category: 'videos',
-        count: 1,
-        query: req.body,
-      })
-      // response.saveVideo(
-      //   response.json.itemInfo.itemStruct.video.downloadAddr,
-      //   'video.mp4',
-      // )
-      res.status(200).send(response?.json)
+      const { endpoint, options } = req.body
+      if (endpoint === 'video') {
+        const { downloadAddr, id } = options
+        const response = await tikapi.public.video({ id })
+        const videoData = await fetch(downloadAddr, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+            ...response.json?.$other?.videoLinkHeaders,
+          },
+        })
+        const arrayBuffer = await videoData.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer).toString('base64')
+        const video = await cloudinary.uploader.upload(`data:video/mp4;base64,${buffer}`, {
+          public_id: `videos/${id}`,
+          resource_type: 'video',
+        })
+        res.status(200).send(video)
+      } else {
+        const response = await tikapi.public.search(options)
+        res.status(200).send(response?.json)
+      }
     } catch (error) {
       res.status(500).send(error)
     }
-  })
+  }
 })

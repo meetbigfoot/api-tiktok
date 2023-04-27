@@ -11,6 +11,6 @@ env-cmd npx functions-framework --target=tiktok
 gcloud functions deploy tiktok \
 --allow-unauthenticated \
 --runtime=nodejs18 \
---set-env-vars TIK_API_KEY=PASTE_KEY_HERE \
+--set-env-vars CLOUDINARY_URL=PASTE_KEY_HERE,TIK_API_KEY=PASTE_KEY_HERE \
 --trigger-http
 ```
